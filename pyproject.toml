@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ini-safe"
+version = "0.1.0"
+description = "A Python INI parser that preserves comments before sections and on-line"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+readme = "README.md"
+authors = [{name = "Simon Arjuna Erat (sri-arjuna)", email = "erat . simon AT gmail . com"}]
+
+[project.optional-dependencies]
+dev = ["pytest", "pre-commit"]
