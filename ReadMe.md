@@ -12,7 +12,7 @@ While configParser is nice, it always removed any/all comments from the file, so
 - Handles "line comment" and "comments behind values"
 - Custom "separator" (default: "=")
 - Allows toggle between: "instant save" or "on purpose"
-- May handle "lazy" (bStrict=False) ini files, that do not have any "[Section]"s
+- May handle "lazy" (bStrict=False) ini files, that do not have any "[Section]"s (this is required for the saving, wether manual or automatic)
 - Allows for fallback/non-existing config 
 
 
@@ -34,12 +34,12 @@ How to handle this class:
 
 ### Import:
 ```python
-from ini_comments import handler
+import inicomments
 ```
 
 ### Initialize:
 ```python
-my_ini = handler("/path/to/file")
+my_ini = inicomments.handler("/path/to/file")
 ```
 
 ### Working with values:
