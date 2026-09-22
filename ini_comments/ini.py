@@ -423,6 +423,7 @@ class ConfigHandler:
     def export(self, file_path: str="", bDict=False):
         """
         Exports configuration
+
         :param file_path: Will save new file_path
         :param bDict: If True will return a dict, but all comments will get lost!
         """
@@ -584,6 +585,7 @@ class ConfigHandler:
     def list_sections(self, bString=False) -> ListOrString:
         """
         Returns a list of available sections.
+        
         :param bString: This will return a string from the *"list, of, sections, in, your, config"*
         """
         sections = list(self.__data.quick.keys())
