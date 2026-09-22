@@ -428,9 +428,15 @@ class ConfigHandler:
         :param bDict: If True will return a dict, but all comments will get lost!
         """
         if bDict:
+            # False by default, so if its true, we can stop here
             return self.__data.quick #.values
+        elif file_path != "":
+            # Double check if something was passed
+            # Will be handled as path/file
+            self.save(export=file_path)
         else:
-            self.save(file_path)
+            # bDict is still False and nothing was passed as file_path
+            raise FileNotFoundError()
 
 
     def save(self, file_export=None):
