@@ -3,13 +3,25 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ini-safe"
+name = "inicomments"
 version = "0.1.0"
 description = "A Python INI parser that preserves comments before sections and on-line"
 requires-python = ">=3.7"
 license = {text = "MIT"}
 readme = "README.md"
+keywords = ["ini", "config", "parser", "comments"]
 authors = [{name = "Simon Arjuna Erat (sri-arjuna)", email = "erat . simon AT gmail . com"}]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
 
 [project.optional-dependencies]
 dev = ["pytest", "pre-commit"]
