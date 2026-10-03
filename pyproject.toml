@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "inicomments"
+name = "inihelper"
 version = "0.1.0"
 description = "A Python INI parser that preserves comments before sections and on-line"
 requires-python = ">=3.7"
