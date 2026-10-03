@@ -1,4 +1,4 @@
-import inihandler 
+import inihandler
 
 #
 #   Set vars for files
@@ -15,7 +15,8 @@ sSpecific = "test-specific.conf"
 print(f"Loading ini: {sDefault}")
 ini_default = inihandler.handler(sDefault)
 # Test output
-print(ini_default.get("section", "sooooo"))
+#print(ini_default.get("section", "sooooo"))
+ini_default.dump()
 
 #
 #   Load an ini/config file without any [Sections]
@@ -27,8 +28,9 @@ print(ini_default.get("section", "sooooo"))
 print(f"Loading ini: {sLazy}")
 ini_lazy  = inihandler.handler(sLazy, bStrict=False)
 # Test output
-ini_lazy.get_simple("some")
-ini_lazy.get_simple("other")
+#ini_lazy.get_simple("some")
+#ini_lazy.get_simple("other")
+ini_default.dump()
 
 #
 #   Last but not least,
@@ -37,6 +39,7 @@ ini_lazy.get_simple("other")
 print(f"Loading ini: {sSpecific}")
 ini_spec  = inihandler.handler(sSpecific, SEP=":", bForcedCommentStyle=";")
 # Test output
-ini_spec.get("urls", "url")
-ini_spec.get("urls", "url_fails")
-ini_spec.get("other", "some_string")
+#ini_spec.get("urls", "url")
+#ini_spec.get("urls", "url_fails")
+#ini_spec.get("other", "some_string")
+ini_default.dump()
