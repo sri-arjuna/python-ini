@@ -419,7 +419,7 @@ class INIhandler:
                 return False
                 #sep = _comments[0]  # default to '#'
 
-            if self.__hasQuotes(this_line):
+            if __hasQuotes(this_line):
                 if not __getPostValueComment(this_line) == "":
                     # Its not empty, so we have a comment there
                     # Now writing this... this seems like a "double check"
@@ -803,17 +803,24 @@ class INIhandler:
         if bString:
             return str(", ".join(sections))
         else:
-            return list(sections)
+            return sections
 
     def list_variables(self, section: str, bString=False) -> ListOrString:
-        """
-        Returns a list of variables """
+        """Returns a list of variables """
         vars = list(self.__data.quick[section].keys())
         if bString:
             return ", ".join(vars)
         else:
-            return list(vars)
+            return vars
 
+    def list_variables_simple(self, bString=False) -> ListOrString:
+        """Returns a list of variables for a config without [Sections]"""
+        vars = list(self.__data.quick.keys())
+        if bString:
+            return ", ".join(vars)
+        else:
+            return vars
+        
     def dump(self):
         """
         Dump sections and values on screen.
@@ -821,13 +828,15 @@ class INIhandler:
         This is practical to test/verify for a valid config file that you want to ship with your project.
         """
         if self.bStrict:
+            # This expects one or more [Sections]
             for sec in self.list_sections():
                 print(f"[{sec}]")
                 for entry in self.list_variables(sec):
-                    print(f" -> {entry}{self._sep}{self.get(sec, entry)}")
+                    print(f"    {entry}{self._sep}{self.get(sec, entry)}")
                 print("\n")
         else:
             # Its a lazy config...
+            # So everything is just: variable = value // var = "val"
             for entry in self.list_variables_simple():
-                print(f" -> {entry}{self._sep}{self.get(sec, entry)}")
+                print(f"    {entry}{self._sep}{self.get_simple(entry)}")
         
