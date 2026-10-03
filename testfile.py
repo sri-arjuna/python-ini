@@ -4,9 +4,9 @@ import inihandler
 #   Set vars for files
 #   easier to reuse
 #
-sDefault = "test-mixed.ini"
-sLazy = "test-lazy.cfg"
-sSpecific = "test-specific.conf"
+sDefault = "test/test-mixed.ini"
+sLazy = "test/test-lazy.cfg"
+sSpecific = "test/test-specific.conf"
 
 #
 #   Load an ini with default settings
@@ -30,16 +30,16 @@ ini_lazy  = inihandler.handler(sLazy, bStrict=False)
 # Test output
 #ini_lazy.get_simple("some")
 #ini_lazy.get_simple("other")
-ini_default.dump()
+ini_lazy.dump()
 
 #
 #   Last but not least,
 #   lets work with some specifics!
 #
 print(f"Loading ini: {sSpecific}")
-ini_spec  = inihandler.handler(sSpecific, SEP=":", bForcedCommentStyle=";")
+ini_spec  = inihandler.handler(sSpecific, SEP=" : ", bForcedCommentStyle=";")
 # Test output
 #ini_spec.get("urls", "url")
 #ini_spec.get("urls", "url_fails")
 #ini_spec.get("other", "some_string")
-ini_default.dump()
+ini_spec.dump()
