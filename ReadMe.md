@@ -54,3 +54,21 @@ my_ini.set("SectionName", "VariableName", "NewValue")
 
 ### Special Handling:
 If you have ``bInstantSave=False`` you simply call: ``my_ini.save()`` at whatever point you want/need to save the file.
+
+
+
+# Example File:
+Here is an example of a - *very chaotic, but still work-able* - ini file:
+
+```
+# Most used comment
+; But you can apply any comment style
+// that fits your project
+
+[section]
+variable = some value
+someting = with a comment // like this
+ofCourse = this would ; work as well
+sooooo = "would this ; if you" ; apply quotes
+
+```
