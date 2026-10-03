@@ -1,0 +1,42 @@
+import inihandler 
+
+#
+#   Set vars for files
+#   easier to reuse
+#
+sDefault = "test-mixed.ini"
+sLazy = "test-lazy.cfg"
+sSpecific = "test-specific.conf"
+
+#
+#   Load an ini with default settings
+#
+
+print(f"Loading ini: {sDefault}")
+ini_default = inihandler.handler(sDefault)
+# Test output
+print(ini_default.get("section", "sooooo"))
+
+#
+#   Load an ini/config file without any [Sections]
+#   aka: a shell-like config
+#
+#   you'd differ between a BASH-shell or a C-Shell by setting a different SEP
+#   but we dont do this here
+#
+print(f"Loading ini: {sLazy}")
+ini_lazy  = inihandler.handler(sLazy, bStrict=False)
+# Test output
+ini_lazy.get_simple("some")
+ini_lazy.get_simple("other")
+
+#
+#   Last but not least,
+#   lets work with some specifics!
+#
+print(f"Loading ini: {sSpecific}")
+ini_spec  = inihandler.handler(sSpecific, SEP=":", bForcedCommentStyle=";")
+# Test output
+ini_spec.get("urls", "url")
+ini_spec.get("urls", "url_fails")
+ini_spec.get("other", "some_string")
