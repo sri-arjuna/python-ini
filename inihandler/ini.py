@@ -17,10 +17,10 @@ _quotes = ["'", '"']
 #
 _MSG = {}
 _ERR = {}
-_lang_dir = f"{_os.curdir}/lang"
-print(_lang_dir)
+_lang_dir = f"{_os.curdir}/inihandler/lang"
+#print(_lang_dir)
 
-class ConfigHandler:
+class INIhandler:
     def __init__(self, file_path: StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str="", lang: str="english"):
         """
         Initialize the ini-handler, the one that preserves file comments on normal saves!
@@ -82,6 +82,10 @@ class ConfigHandler:
         self.__data.comment_on_line = {}
         # Internal bool to ease handling -> expecting str(file_path) by default.
         self._isDict = False
+
+        # Lets ini the language messages
+        self.lang_list()
+        self.lang_set(lang)
 
         # Lets be lazy
         self._load_any()
@@ -162,11 +166,23 @@ class ConfigHandler:
         global _lang_dir
         newLang = f"{_lang_dir}\\{language}.py"
         if _os.path.isfile(newLang):
-            # hold on.. i know this wont work... i cant import from a string reference to an absolute path.. right?
-            _sys.path.append(str(_lang_dir))
-            from newLang import _MSG, _ERR
-            return True
+            if language == "english":
+                from .lang.english import _MSG, _ERR
+                return True
+            else:
+                # Currently no other languages are supported
+                # Using default language as fallback
+                from .lang.english import _MSG, _ERR
+                
+                # i cant import from a string reference to an absolute path.. right?
+                #_sys.path.append(str(_lang_dir))
+                #from .lang.language import _MSG, _ERR
+
+                # returning false to indicate the proper language is missing.
+                return False
         # Provided string isnt an existing language file
+        # Lets load default language and return False
+        from .lang.english import _MSG, _ERR
         return False
     
     def lang_list(self) -> list:
@@ -797,3 +813,21 @@ class ConfigHandler:
             return ", ".join(vars)
         else:
             return list(vars)
+
+    def dump(self):
+        """
+        Dump sections and values on screen.
+        
+        This is practical to test/verify for a valid config file that you want to ship with your project.
+        """
+        if self.bStrict:
+            for sec in self.list_sections:
+                print(sec)
+                for entry in self.list_variables(sec):
+                    print(f" -> {entry}{self._sep}{self.get(sec, entry)}")
+                print("\n")
+        else:
+            # Its a lazy config...
+            for entry in self.list_variables(sec):
+                print(f" -> {entry}{self._sep}{self.get(sec, entry)}")
+        

@@ -1,7 +1,7 @@
-from .ini import ConfigHandler
+from .ini import INIhandler as _INIhandler
 from typing import Union as _Union
 
-def handler(file_path="", bInstantSave=True, bStrict=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose=False, sVerbosePrefix="", SEP="=", sEncoding="utf-8", sDefaultBackupConfig=""):
+def handler(file_path="", bInstantSave=True, bStrict=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose=False, sVerbosePrefix="", SEP="=", sEncoding="utf-8", sDefaultBackupConfig="", lang: str="english"):
     """
     Initialize the ini-handler, the one that preserves file comments on normal saves!
 
@@ -22,4 +22,4 @@ def handler(file_path="", bInstantSave=True, bStrict=True, bForcedCommentStyle: 
     :param sEncoding: On rare occasions your files might not be "utf-8", here you can handle such cases.
     :param sDefaultBackupConfig: Expects "path/to/file", this will be used if required "file_path" doesnt exist) and/or if/when its config became invalid.
     """
-    return ConfigHandler(file_path, bInstantSave=bInstantSave, bStrict=bStrict, bForcedCommentStyle=bForcedCommentStyle, bVerbose=bVerbose, sVerbosePrefix=sVerbosePrefix, SEP=SEP, sEncoding=sEncoding, sDefaultBackupConfig=sDefaultBackupConfig)
+    return _INIhandler(file_path, bInstantSave=bInstantSave, bStrict=bStrict, bForcedCommentStyle=bForcedCommentStyle, bVerbose=bVerbose, sVerbosePrefix=sVerbosePrefix, SEP=SEP, sEncoding=sEncoding, sDefaultBackupConfig=sDefaultBackupConfig, lang=lang)
