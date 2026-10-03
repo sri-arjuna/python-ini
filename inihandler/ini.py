@@ -821,13 +821,13 @@ class INIhandler:
         This is practical to test/verify for a valid config file that you want to ship with your project.
         """
         if self.bStrict:
-            for sec in self.list_sections:
-                print(sec)
+            for sec in self.list_sections():
+                print(f"[{sec}]")
                 for entry in self.list_variables(sec):
                     print(f" -> {entry}{self._sep}{self.get(sec, entry)}")
                 print("\n")
         else:
             # Its a lazy config...
-            for entry in self.list_variables(sec):
+            for entry in self.list_variables_simple():
                 print(f" -> {entry}{self._sep}{self.get(sec, entry)}")
         
