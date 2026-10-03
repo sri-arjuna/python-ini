@@ -6,7 +6,9 @@ from typing import Tuple as _Tuple
 StringOrDict = _Union[str, dict]
 ListOrString = _Union[list, str]
 StringAndString = _Tuple[str, str]
-_comments = ["#", ";", "//"]
+_comments = ["#", ";", "//", "|"]
+_comments_multi_start = ["/*", "<!--", '"""']
+_comments_multi_end = ["*/", "-->", '"""']
 _quotes = ["'", '"']
 
 #
@@ -14,33 +16,26 @@ _quotes = ["'", '"']
 #    for easier re-use
 #
 _MSG = {}
-_MSG["conf_read"] = "Configuration loaded."
-_MSG["file_not_found"] = "Configuration file not found"
-_MSG["memory_only"] =  "No file path provided. Operating in memory-only mode."
-_MSG["invalid_data"] = "Invalid data"
-_MSG["imported"] = "Imported configuration."
-_MSG["backup"] = "Restoring to default configuration."
-#_MSG[""] = 
-
 _ERR = {}
-_ERR["buffer"] = "Some buffer problem."
-_ERR["value"] =  "Value mismatch."
-_ERR["generic"] = "Error"
-_ERR["import"] = "Could not import configuration."
-_ERR["empty"] = "Valid dict format, but empty values."
-_ERR["backup"] = f"Could not restore default configuration."
-#_ERR[""] = 
+_lang_dir = f"{_os.curdir}/lang"
+print(_lang_dir)
 
 class ConfigHandler:
-    def __init__(self, file_path: StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str=""):
+    def __init__(self, file_path: StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str="", lang: str="english"):
         """
-        Initialize the config handler, the one that preserves file comments on normal saves!
-
-        Errors will always be printed.
-
+        Initialize the ini-handler, the one that preserves file comments on normal saves!
+        
+        Errors will always be printed to "stderr".
+    
+        Supported comment-single/on-line styles are: "#", ";", "//", "|"
+    
+        Supported comment-MULTI-line styles are: "*/", "-->", '\"\"\"'
+    
+    
         :param file_path: Path to the .ini **file**, or a **nested dict**: {"Section 1": {"var1": "value1"}, "Section 2": {"variable_name": "its value"}}
         :param bInstantSave: If True, saves to file on every 'set()'.
         :param bStrict: True/Default expects '[Section]', where as 'False' will expect ONLY 'variable = value'
+        :param bForcedCommentStyle: If set to a non-None string (e.g., "#"), it enforces that only that specific comment style is accepted for all parsing. Set to None for flexible, multi-style comment handling, incl multi-line comments.
         :param bVerbose: If True, prints basic status messages.
         :param sVerbosePrefix: This will print '[sVerbosePrefix] message' instead of just 'message'
         :param SEP: The separator for key-value pairs (default "=" for cross-platform compatability).
@@ -73,6 +68,13 @@ class ConfigHandler:
         self._sVerbosePrefix = sVerbosePrefix
         self._sep = SEP
         self.sDefaultBackupConfig = sDefaultBackupConfig
+        self.bForcedCommentStyle = bForcedCommentStyle
+        self.lang = lang
+
+        # --- Update to load_data and load_file ---
+        # (No change needed here as load functions only read data, they don't apply forced comments)
+        # --- Update to save ---
+        # Logic in save() must check self.bForcedComment before writing comment_before or comment_on_line.
         self.__data = _DataContainer()
         self.__data.quick = {}
         self.__data.raw = ""
@@ -115,7 +117,9 @@ class ConfigHandler:
     def __validate_data(self, content: dict) -> bool:
         """
         Verifies the structure of the configuration data.
+
         Strict: All top-level entries must be sections (dicts).
+
         Lazy: Top-level entries must be strings (well, single dict - ONLY :: var=val ;; no [Sections]).
         """
         if not content:
@@ -130,7 +134,7 @@ class ConfigHandler:
                     return False
             return True
         else:
-            # Lazy mode: Expecting a simgple config
+            # Lazy mode: Expecting a simple config
             # As long as it's a dict (variable = value), it's valid - which we already ensured by entering this function
             return True
 
@@ -151,6 +155,32 @@ class ConfigHandler:
             self._print_verbose("Reset failed: Backup config path is empty or non-existent.")
             return False
 
+    def lang_set(self, language: str) -> bool:
+        """Either init or change a supported language"""
+        global _MSG
+        global _ERR
+        global _lang_dir
+        newLang = f"{_lang_dir}\\{language}.py"
+        if _os.path.isfile(newLang):
+            # hold on.. i know this wont work... i cant import from a string reference to an absolute path.. right?
+            _sys.path.append(str(_lang_dir))
+            from newLang import _MSG, _ERR
+            return True
+        # Provided string isnt an existing language file
+        return False
+    
+    def lang_list(self) -> list:
+        """List supported languages"""
+        global _MSG
+        global _ERR
+        global _lang_dir
+        result = []
+        
+        for entry in _os.listdir(_lang_dir):
+            if _os.path.isfile(entry):
+                result.append(entry[:2])
+        return list(result)
+    
     ############################################################################
     #
     #   LOAD DATA STUFF
