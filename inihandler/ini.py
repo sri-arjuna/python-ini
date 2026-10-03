@@ -833,7 +833,6 @@ class INIhandler:
                 print(f"[{sec}]")
                 for entry in self.list_variables(sec):
                     print(f"    {entry}{self._sep}{self.get(sec, entry)}")
-                print("\n")
         else:
             # Its a lazy config...
             # So everything is just: variable = value // var = "val"
