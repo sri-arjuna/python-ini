@@ -90,6 +90,9 @@ class INIhandler:
         # Lets be lazy
         self._load_any()
 
+        # Prepare things global?
+        
+
     #
     #   Default functions
     #
@@ -302,6 +305,14 @@ class INIhandler:
 
         # Import Messages
         global _MSG, _ERR
+        
+        # Import variables
+        bForcedCommentStyle = self.bForcedCommentStyle
+        SEP = self._sep
+        global _comments_multi_end
+        global _comments_multi_start
+        isMultiLine = None # Either "None", or found index of list
+        
 
         # Lets verify file exists, or at least a default config
         if not _os.path.exists(str(this_file)):
@@ -392,7 +403,7 @@ class INIhandler:
             # No valid comment was found    
             return False
 
-        def _hasOnLineComment(this_line: str) -> bool:
+        def _hasOnLineComment(this_line: str, bForcedCommentStyle=bForcedCommentStyle, SEP=SEP) -> bool:
             """
             Checks whether the line has a comment after the value, that is NOT inside quotes.
 
@@ -405,15 +416,23 @@ class INIhandler:
             # 2. if any quotes were found, only check past the closing quote
 
             global _comments
+            #global bForcedCommentStyle  # this will be assigned to "sep" (lower case) -> comment indicator
+            #global SEP                  # this is the var = val indicator, SEP (capital letter)
 
-            # Expect an assignment separator
+            # Expect an comment separator
             sep = None
-            for com in _comments: 
-                if com in this_line:
-                    # TODO possible issue -> stupid example:  'var=val // we have #3 problems with this value ; maybe more'
-                    sep = com
-                    # The above said, doesnt really matter wether we "overwrite" sep, or break on first find...
-                    break
+            if not bForcedCommentStyle:
+                for com in _comments: 
+                    if com in this_line:
+                        # TODO possible issue -> stupid example:  'var=val // we have #3 problems with this value ; maybe more'
+                        sep = com
+                        # The above said, doesnt really matter wether we "overwrite" sep, or break on first find...
+                        break
+            else:
+                # Only 1 "style" of comments is allowed
+                if bForcedCommentStyle in this_line:
+                    sep = bForcedCommentStyle
+
             if not sep:
                 # No valid comment indicator found
                 return False
@@ -428,7 +447,7 @@ class INIhandler:
                     return True
 
 
-            if not any(c in this_line for c in ['=', ':']):
+            if not SEP in this_line:
                 return False
             
             # Find the separator
@@ -569,7 +588,7 @@ class INIhandler:
                     
                     # This could be enough, but since we're parsing anyway line by line..
                     # Lets assign any found data to self.__data.quick as well
-                    if _isSection(clean_line):
+                    elif _isSection(clean_line):
                         last_section = current_section
                         current_section = _getSection(clean_line)
                         if not tmp_list == []:
@@ -584,10 +603,10 @@ class INIhandler:
                         continue
 
                     # Hope for values...
-                    if _isValue(clean_line):
+                    elif _isValue(clean_line):
                         var, val = "", ""
                         # Lets make sure, we're only getting the data
-                        if _hasOnLineComment(clean_line):
+                        if _hasOnLineComment(clean_line, bForcedCommentStyle=bForcedCommentStyle, SEP=SEP):
                             tmp, com = "", ""
                             tmp, com = _SplitCommentAfterValue(clean_line)
                             var, val = _SplitVarValue(tmp)
@@ -619,6 +638,52 @@ class INIhandler:
                         
                         # We're at the bottom of checks anyway, so continue is not needed...
                         #continue
+                    else:
+                        # If we reach this point, the line was  unhandled....
+                        # So we're doing the latest addition of supporting multi-line-comment (allthough that usualy isnt the case for regular ini files)
+                        #self._print_verbose(f"Unhandled line (does this work???): {clean_line}",bOverWriteErrorMessage=True)
+                        if isMultiLine:
+                            # Its "open" (aka a not-None value is set), expecting an integer
+                            # Since its "open", we can add the current line EITHER way...
+                            # However, since this is expected to be a comment, we do not trim whitespace
+                            if not self.bStrict or current_section == "":
+                                self.__data.comment_before[var] = []
+                                self.__data.comment_before[var] = line
+                            else:
+                                self.__data.comment_before[f"{current_section}.{var}"] = []
+                                self.__data.comment_before[f"{current_section}.{var}"] = line
+                            
+                            # Lets check wether we can close/end the multi line comment or not
+                            if _comments_multi_end[isMultiLine] in clean_line:
+                                # We have found the closing tag
+                                isMultiLine = None
+                        else:
+                            # At this point, it must be either an opening for a multi line, 
+                            # or somethign different entirely...
+                            i = 0
+                            for mli in _comments_multi_start:
+                                if clean_line.startswith(mli) or mli in clean_line:
+                                    # It is the start of a multi line comment
+                                    i = mli.index()
+                                    isMultiLine = i
+
+                                    # Lets add it to the comments:
+                                    if not self.bStrict or current_section == "":
+                                        self.__data.comment_before[var] = []
+                                        self.__data.comment_before[var] = line
+                                    else:
+                                        self.__data.comment_before[f"{current_section}.{var}"] = []
+                                        self.__data.comment_before[f"{current_section}.{var}"] = line
+
+                                    # Value is added, lets...
+                                    continue
+                        # If we reach this point, the current line still isnt handled...
+                        # lets print out a warning / information
+                        self._print_verbose(f"Unhandled line: {line}", bOverWriteErrorMessage=True)
+
+
+
+                    self._print_verbose(f"Unhandled line (outside if blocks): {clean_line}",bOverWriteErrorMessage=True)
 
 
         except Exception as e:
