@@ -705,12 +705,14 @@ class INIhandler:
 
                                     # Value is added, lets...
                                     continue
+                            # We have not found a multiline comment indicator
+                            # so basicly, the current line remains unhandled...
+                            self._print_verbose(f"Unhandled line - last else/most inner: {line}", bOverWriteErrorMessage=True)
                         # If we reach this point, the current line still isnt handled...
                         # lets print out a warning / information
-                        self._print_verbose(f"Unhandled line: {line}", bOverWriteErrorMessage=True)
-
-
-
+                        self._print_verbose(f"Unhandled line - outside: {line}", bOverWriteErrorMessage=True)
+                    # At this point, i actualy would expect 3 error messages to appear
+                    # this is at the same "height" (indent) as the top IF and following "ELIF"'s, hence, if none "grip", we should see this
                     self._print_verbose(f"Unhandled line (outside if blocks): {clean_line}",bOverWriteErrorMessage=True)
 
 
