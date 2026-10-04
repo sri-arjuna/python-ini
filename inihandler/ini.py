@@ -17,6 +17,7 @@ _quotes = ["'", '"']
 #
 _MSG = {}
 _ERR = {}
+_WARN = {}
 _lang_dir = f"{_os.curdir}/inihandler/lang"
 #print(_lang_dir)
 
@@ -166,16 +167,17 @@ class INIhandler:
         """Either init or change a supported language"""
         global _MSG
         global _ERR
+        global _WARN
         global _lang_dir
         newLang = f"{_lang_dir}\\{language}.py"
         if _os.path.isfile(newLang):
             if language == "english":
-                from .lang.english import _MSG, _ERR
+                from .lang.english import _MSG, _ERR, _WARN
                 return True
             else:
                 # Currently no other languages are supported
                 # Using default language as fallback
-                from .lang.english import _MSG, _ERR
+                from .lang.english import _MSG, _ERR, _WARN
                 
                 # i cant import from a string reference to an absolute path.. right?
                 #_sys.path.append(str(_lang_dir))
@@ -185,13 +187,14 @@ class INIhandler:
                 return False
         # Provided string isnt an existing language file
         # Lets load default language and return False
-        from .lang.english import _MSG, _ERR
+        from .lang.english import _MSG, _ERR, _WARN
         return False
     
     def lang_list(self) -> list:
         """List supported languages"""
         global _MSG
         global _ERR
+        global _WARN
         global _lang_dir
         result = []
         
@@ -304,7 +307,7 @@ class INIhandler:
             this_file=str(self.file_path)
 
         # Import Messages
-        global _MSG, _ERR
+        global _MSG, _ERR, _WARN
         
         # Import variables
         bForcedCommentStyle = self.bForcedCommentStyle
@@ -394,14 +397,29 @@ class INIhandler:
                 return work_line[posC + 1].strip()
 
 
-        def _isComment(this_line: str) -> bool:
+        def _isComment(this_line: str, bForcedCommentStyle=bForcedCommentStyle) -> bool:
             """Is a comment?"""
             global _comments
+            global _WARN
+            ret = False
+            # First, lets check for forced comment
+            if bForcedCommentStyle:
+                # Its not None
+                if this_line.startswith(bForcedCommentStyle):
+                    # Yes, it does start with a forced comment style
+                    ret = True
+
             for com in _comments:
                 if str(this_line).startswith(com):
-                    return True
+                    # Lets double check if it was a forced one,
+                    # and/or act with the the current found one differs from the forced one
+                    if bForcedCommentStyle and com != bForcedCommentStyle:
+                        # We have a forced comment style, but the used/found comment indicator differs
+                        print(f"{_WARN["bForcedCommentStyle_differs"]}: '{com}' != bForcedCommentStyle='{bForcedCommentStyle}'", file=_sys.stderr)
+                    ret = True
+                    break
             # No valid comment was found    
-            return False
+            return ret
 
         def _hasOnLineComment(this_line: str, bForcedCommentStyle=bForcedCommentStyle, SEP=SEP) -> bool:
             """
@@ -583,8 +601,9 @@ class INIhandler:
                     self.__data.lines.append(clean_line)
 
                     # Lets prepare comment buffer
-                    if _isComment(clean_line) or clean_line == "":
+                    if _isComment(clean_line, bForcedCommentStyle=bForcedCommentStyle) or clean_line == "":
                         tmp_list.append(clean_line)
+                        continue
                     
                     # This could be enough, but since we're parsing anyway line by line..
                     # Lets assign any found data to self.__data.quick as well
@@ -636,8 +655,9 @@ class INIhandler:
                             # Reset list
                             tmp_list = []
                         
-                        # We're at the bottom of checks anyway, so continue is not needed...
-                        #continue
+                        ##### We're at the bottom of checks anyway, so continue is not needed...
+                        # Since we added multi-line-comments, and this was a proper value, we do need to....
+                        continue
                     else:
                         # If we reach this point, the line was  unhandled....
                         # So we're doing the latest addition of supporting multi-line-comment (allthough that usualy isnt the case for regular ini files)
@@ -664,8 +684,16 @@ class INIhandler:
                             for mli in _comments_multi_start:
                                 if clean_line.startswith(mli) or mli in clean_line:
                                     # It is the start of a multi line comment
-                                    i = mli.index()
-                                    isMultiLine = i
+                                    # so lets get the index
+                                    while i < len(_comments_multi_start):
+                                        if mli != _comments_multi_start[i]:
+                                            print(f"DEBUG:: {i} is small than {len(_comments_multi_start)}")
+                                            i += 1
+                                        else:
+                                            # its the right one
+                                            isMultiLine = i
+                                            break
+                                    print(f"DEBUG:: found mult line maker: {mli} at index: {i} --- sadly this isnt even shown yet")
 
                                     # Lets add it to the comments:
                                     if not self.bStrict or current_section == "":
