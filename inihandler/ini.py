@@ -3,9 +3,9 @@ import sys as _sys
 import shutil as _shutil
 from typing import Union as _Union
 from typing import Tuple as _Tuple
-StringOrDict = _Union[str, dict]
-ListOrString = _Union[list, str]
-StringAndString = _Tuple[str, str]
+_StringOrDict = _Union[str, dict]
+_ListOrString = _Union[list, str]
+_StringAndString = _Tuple[str, str]
 _comments = ["#", ";", "//", "|"]
 _comments_multi_start = ["/*", "<!--", '"""']
 _comments_multi_end = ["*/", "-->", '"""']
@@ -22,7 +22,7 @@ _lang_dir = f"{_os.curdir}/inihandler/lang"
 #print(_lang_dir)
 
 class INIhandler:
-    def __init__(self, file_path: StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str="", lang: str="english"):
+    def __init__(self, file_path: _StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str="", lang: str="english"):
         """
         Initialize the ini-handler, the one that preserves file comments on normal saves!
         
@@ -36,12 +36,13 @@ class INIhandler:
         :param file_path: Path to the .ini **file**, or a **nested dict**: {"Section 1": {"var1": "value1"}, "Section 2": {"variable_name": "its value"}}
         :param bInstantSave: If True, saves to file on every 'set()'.
         :param bStrict: True/Default expects '[Section]', where as 'False' will expect ONLY 'variable = value'
-        :param bForcedCommentStyle: If set to a non-None string (e.g., "#"), it enforces that only that specific comment style is accepted for all parsing. Set to None for flexible, multi-style comment handling, incl multi-line comments.
+        :param bForcedCommentStyle: If set to a non-None string (e.g., "#"), it enforces that only that specific comment style is accepted for all parsing. Set to 'None' for flexible, multi-style comment handling, incl multi-line comments.
         :param bVerbose: If True, prints basic status messages.
         :param sVerbosePrefix: This will print '[sVerbosePrefix] message' instead of just 'message'
         :param SEP: The separator for key-value pairs (default "=" for cross-platform compatability).
         :param sEncoding: On rare occasions your files might not be "utf-8", here you can handle such cases.
         :param sDefaultBackupConfig: Expects "path/to/file", this will be used if required "file_path" doesnt exist) and/or if/when its config became invalid.
+        :param lang: Defaults to 'english' for 'messages', currently no other languages are supported
         """
         class _DataContainer:
             def __init__(self): #, section: str, variable: any
@@ -89,7 +90,9 @@ class INIhandler:
         self.lang_set(lang)
 
         # Lets be lazy
+        self._print_verbose(_MSG["init"])
         self._load_any()
+        self._print_verbose(_MSG["conf_read"])
 
         # Prepare things global?
         
@@ -148,45 +151,55 @@ class INIhandler:
 
     def __ResetConfig(self):
         """Restores the configuration file from the provided backup path."""
+        self._print_verbose(_WARN['backup_start'])
         if self.sDefaultBackupConfig and _os.path.exists(self.sDefaultBackupConfig):
-            self._print_verbose(f"Restoring config from: {self.sDefaultBackupConfig}")
             try:
                 # shutil.copy2 preserves metadata (like timestamps) 
                 # shutil.copy just copies the content.
                 _shutil.copy2(str(self.sDefaultBackupConfig), str(self.file_path))
-                self._print_verbose(f"Success: {self.file_path} has been restored.")
+                self._print_verbose(f"{_WARN['backup_end']} -> {self.file_path}")
                 return True
             except Exception as e:
-                self._print_verbose(f"Reset failed: {e}")
+                # This is an error and thus most be forced
+                self._print_verbose(f"{_ERR['backup_fail']} -> {self.file_path}:\n{e}", bOverWriteErrorMessage=True)
                 return False
         else:
-            self._print_verbose("Reset failed: Backup config path is empty or non-existent.")
+            # This is an error and thus most be forced
+            self._print_verbose(f"{_ERR['backup_miss']} -> '{self.sDefaultBackupConfig}'.", bOverWriteErrorMessage=True)
             return False
 
     def lang_set(self, language: str) -> bool:
-        """Either init or change a supported language"""
+        """
+        WIP: Either init or change a supported language
+        
+        Expects either an exiting file in ./inihandler/lang or full path to file
+        """
         global _MSG
         global _ERR
         global _WARN
         global _lang_dir
         newLang = f"{_lang_dir}\\{language}.py"
-        if _os.path.isfile(newLang):
-            if language == "english":
-                from .lang.english import _MSG, _ERR, _WARN
-                return True
-            else:
-                # Currently no other languages are supported
-                # Using default language as fallback
-                from .lang.english import _MSG, _ERR, _WARN
-                
-                # i cant import from a string reference to an absolute path.. right?
-                #_sys.path.append(str(_lang_dir))
-                #from .lang.language import _MSG, _ERR
+        for L in newLang, language:
+            if _os.path.isfile(f):
+                if L == "english":
+                    self._print_verbose(f"{_MSG['lang_default']}: {L}")
+                    from .lang.english import _MSG, _ERR, _WARN
+                    return True
+                else:
+                    # Currently no other languages are supported
+                    # Using default language as fallback
+                    from .lang.english import _MSG, _ERR, _WARN
+                    
+                    # i cant import from a string reference to an absolute path.. right?
+                    #_sys.path.append(str(_lang_dir))
+                    #from .lang.language import _MSG, _ERR, _WARN
 
-                # returning false to indicate the proper language is missing.
-                return False
+                    # returning false to indicate the proper language is missing.
+                    return False
+        
         # Provided string isnt an existing language file
         # Lets load default language and return False
+        self._print_verbose(f"{_WARN['lang_miss']} -> {language}")
         from .lang.english import _MSG, _ERR, _WARN
         return False
     
@@ -220,12 +233,16 @@ class INIhandler:
         #   We'll be using EITHER load_file (file) OR load_data (dict)
         #
         if isinstance(self.file_path, str):
+            self._print_verbose(f"{_MSG['conf_load']}: 'str' ({self.file_path}).")
             self.load_file()
+            return True
         elif isinstance(self.file_path, dict):
             self._isDict = True
+            self._print_verbose(f"{_MSG['conf_load']} 'dict'.")
             # There is no instant save, if its dict/memory only!
             self.bInstantSave = False
             self.load_data()
+            return True
         else:
             # Invalid data // should not be possible to reach
             if not self.sDefaultBackupConfig == "":
@@ -533,12 +550,12 @@ class INIhandler:
             
             return False
 
-        def _SplitCommentAfterValue(this_line: str) -> StringAndString:
+        def _SplitCommentAfterValue(this_line: str) -> _StringAndString:
             """"
             If 'this_line' has a comment after value, it returns: value, comment
 
             :param this_line: Pass string to function
-            :param StringAndString: Retrieve as: "line, comment = _SplitCommentAfterValue(line_current)"
+            :param _StringAndString: Retrieve as: "line, comment = _SplitCommentAfterValue(line_current)"
             """
             parts = this_line.split("#", 1)
             return parts[0].strip(), parts[1].strip()
@@ -569,7 +586,7 @@ class INIhandler:
                 return True
             return False
 
-        def _SplitVarValue(this_line: str) -> StringAndString:
+        def _SplitVarValue(this_line: str) -> _StringAndString:
             """
             This expects 'this_line' to be already 'cleaned' from any possible 'on line comments'.
             
@@ -833,9 +850,12 @@ class INIhandler:
             if section in self.__data.quick:
                 try:
                     return self.__data.quick[section][variable]
-                except KeyError:        raise KeyError
-                except IndexError:      raise IndexError
-                except LookupError:     raise LookupError
+                except Exception as e:
+                    self._print_verbose(f"KEY; get: DICT -> __data.quick --> {self.__data.quick} ;;; sec: {section}, var: {variable}")
+                    raise Exception
+                #except KeyError:        raise KeyError
+                #except IndexError:      raise IndexError
+                #except LookupError:     raise LookupError
             else:
                 self._print_verbose(f"No '{section}' or '{variable}' found in '{self.file_path}'...", bOverWriteErrorMessage=True)
         else:
@@ -846,9 +866,12 @@ class INIhandler:
         if variable in self.__data.quick:
             try:
                 return self.__data.quick[variable]
-            except KeyError:        raise KeyError
-            except IndexError:      raise IndexError
-            except LookupError:     raise LookupError
+            except Exception as e:
+                self._print_verbose(f"KEY; get_simple: DICT -> __data.quick --> {self.__data.quick} ;;; var: {variable}")
+                raise Exception
+            #except KeyError:        raise KeyError
+            #except IndexError:      raise IndexError
+            #except LookupError:     raise LookupError
         else:
             self._print_verbose(f"No '{variable}' found in '{self.file_path}'...", bOverWriteErrorMessage=True)
     
@@ -860,12 +883,15 @@ class INIhandler:
                 if self.bInstantSave and self.file_path:
                     self.save()
                 return True
-            except KeyError:        raise KeyError
-            except IndexError:      raise IndexError
-            except LookupError:     raise LookupError
             except Exception as e:
-                self._print_verbose(e, bOverWriteErrorMessage=True)
-                return False
+                self._print_verbose(f"KEY; get: DICT -> __data.quick --> {self.__data.quick} ;;; sec: {section}, var: {variable}, val: {value}")
+                raise Exception
+            #except KeyError:        raise KeyError
+            #except IndexError:      raise IndexError
+            #except LookupError:     raise LookupError
+            #except Exception as e:
+            #    self._print_verbose(e, bOverWriteErrorMessage=True)
+            #    return False
         else:
             return self.set_simple(variable, value)
 
@@ -888,7 +914,7 @@ class INIhandler:
     def _get_quick(self):
         return self.__data.quick
 
-    def list_sections(self, bString=False) -> ListOrString:
+    def list_sections(self, bString=False) -> _ListOrString:
         """
         Returns a list of available sections.
         
@@ -900,7 +926,7 @@ class INIhandler:
         else:
             return sections
 
-    def list_variables(self, section: str, bString=False) -> ListOrString:
+    def list_variables(self, section: str, bString=False) -> _ListOrString:
         """Returns a list of variables """
         vars = list(self.__data.quick[section].keys())
         if bString:
@@ -908,7 +934,7 @@ class INIhandler:
         else:
             return vars
 
-    def list_variables_simple(self, bString=False) -> ListOrString:
+    def list_variables_simple(self, bString=False) -> _ListOrString:
         """Returns a list of variables for a config without [Sections]"""
         vars = list(self.__data.quick.keys())
         if bString:
