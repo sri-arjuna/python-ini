@@ -13,15 +13,16 @@ sSpecific = "test/test-specific.conf"
 #   Load an ini with stable formating and default settings
 #
 print(f"\nLoading ini: {sStable}")
-ini_stable = inihandler.handler(sStable, bVerbose=True)
+ini_stable = inihandler.handler(sStable, SEP=" = ", sVerbosePrefix="Stable Example")
 # Test output
 ini_stable.dump()
 
 #
 #   Load an ini with default settings
+#   bVerbose=True, 
 #
 print(f"\nLoading ini: {sDefault}")
-ini_default = inihandler.handler(sDefault, bVerbose=True)
+ini_default = inihandler.handler(sDefault, sVerbosePrefix="Default/Mixed Example")
 # Test output
 ini_default.dump()
 
@@ -33,7 +34,7 @@ ini_default.dump()
 #   but we dont do this here
 #
 print(f"\nLoading ini: {sLazy}")
-ini_lazy  = inihandler.handler(sLazy, bStrict=False, bVerbose=True)
+ini_lazy  = inihandler.handler(sLazy, bStrict=False, bVerbose=True, sVerbosePrefix="Lazy Example")
 # Test output
 ini_lazy.dump()
 
@@ -42,6 +43,6 @@ ini_lazy.dump()
 #   lets work with some specifics!
 #
 print(f"\nLoading ini: {sSpecific}")
-ini_spec  = inihandler.handler(sSpecific, SEP=" : ", bForcedCommentStyle=";", bVerbose=True)
+ini_spec  = inihandler.handler(sSpecific, SEP=" : ", bForcedCommentStyle=";", bVerbose=True, sVerbosePrefix="Specific Changes")
 # Test output
 ini_spec.dump()
