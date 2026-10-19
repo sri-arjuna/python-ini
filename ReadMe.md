@@ -75,6 +75,6 @@ sooooo = "would this ; if you" ; apply quotes
 ```
 
 # Additional Examples
-- can be found on [github](https://github.com/sri-arjuna/python-ini)
+- can be found on [https://github.com/sri-arjuna/python-ini](https://github.com/sri-arjuna/python-ini)
 - just run ``py ./testfile.py`` to get a sample dump per example config
 - example config files are in ``./test/``
