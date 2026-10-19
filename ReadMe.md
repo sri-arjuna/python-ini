@@ -1,19 +1,19 @@
-# INI Comments
-This is a ini-file handler that preserves comments.
+# INI Handler
+This is a ini/config-file handler that preserves comments.
 
 For various projects of mine, I prefer to provide comments within an ini file for others to know their meanings, or other options.
 
-While configParser is nice, it always removed any/all comments from the file, so this project solves that issue.
+While ConfigParser is nice, it always removed any/all comments from the file, so this project solves that issue.
 
 
 ### Features:
-- Supports: "#", ";" and "//" as line comments
 - Preserve comments
-- Handles "line comment" and "comments behind values"
-- Custom "separator" (default: "=")
+- Supports: "#", ":", ";" and "//" as line comments
+- Supports "line comment" and "comments behind values"
+- Custom "separator" (default: "=", but you could used: " : " just as well, or whatever else)
 - Allows toggle between: "instant save" or "on purpose"
-- May handle "lazy" (bStrict=False) ini files, that do not have any "[Section]"s (this is required for the saving, wether manual or automatic)
-- Allows for fallback/non-existing config 
+- May handle "lazy" (bStrict=False ; default:: bStrict=True) ini files, that do not have any "[Section]"s (this is required for the saving, wether manual or automatic)
+- Allows for fallback/non-existing config, in case a config file gets corrupted or deleted
 
 
 # Usage:
@@ -34,12 +34,12 @@ How to handle this class:
 
 ### Import:
 ```python
-import inicomments
+import inihandler
 ```
 
 ### Initialize:
 ```python
-my_ini = inicomments.handler("/path/to/file")
+my_ini = inihandler.handler("/path/to/file")
 ```
 
 ### Working with values:
@@ -55,6 +55,7 @@ my_ini.set("SectionName", "VariableName", "NewValue")
 ### Special Handling:
 If you have ``bInstantSave=False`` you simply call: ``my_ini.save()`` at whatever point you want/need to save the file.
 
+You can still use ``my_ini.get(section, key)`` or ``my_ini.get_simple(key)`` to retrieve current settings from memory.
 
 
 # Example File:
@@ -72,3 +73,8 @@ ofCourse = this would ; work as well
 sooooo = "would this ; if you" ; apply quotes
 
 ```
+
+# Additional Examples
+- can be found on [github](https://github.com/sri-arjuna/python-ini)
+- just run ``py ./testfile.py`` to get a sample dump per example config
+- example config files are in ``./test/``

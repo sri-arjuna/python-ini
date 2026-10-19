@@ -4,17 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inihelper"
-version = "0.1.0"
-description = "A Python INI parser that preserves comments before sections and on-line"
+version = "0.1.1"
+description = "An INI parser that preserves comments, supports custom 'separator' (=) 'rules' and comment styles, incl (wip) multiline."
 requires-python = ">=3.7"
 license = {text = "MIT"}
 readme = "README.md"
 keywords = ["ini", "config", "parser", "comments"]
-authors = [{name = "Simon Arjuna Erat (sri-arjuna)", email = "erat . simon AT gmail . com"}]
+authors = [{name = "Simon Arjuna Erat (sri-arjuna)", email = "erat.simon@gmail.com"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Topic :: Utilities",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -23,5 +24,12 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest", "pre-commit"]
+#[project.optional-dependencies]
+#dev = ["pytest", "pre-commit"]
+
+[tool.setuptools]
+
+[project.urls]  # Optional
+"Homepage" = "https://github.com/sri-arjuna/python-ini"
+"Bug Reports" = "https://github.com/sri-arjuna/python-ini/issues"
+"Source" = "https://github.com/sri-arjuna/python-ini"
