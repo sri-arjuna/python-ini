@@ -1,28 +1,21 @@
 import os as _os
 import sys as _sys
 import shutil as _shutil
-from typing import Union as _Union
-from typing import Tuple as _Tuple
-_StringOrDict = _Union[str, dict]
-_ListOrString = _Union[list, str]
-_StringAndString = _Tuple[str, str]
-_comments = ["#", ";", "//", "|"]
-_comments_multi_start = ["/*", "<!--", '"""']
-_comments_multi_end = ["*/", "-->", '"""']
-_quotes = ["'", '"']
+from .tools import LoadFile
+from .tools import vars
 
 #
 #    Basic message variables
 #    for easier re-use
 #
-_MSG = {}
-_ERR = {}
-_WARN = {}
-_lang_dir = f"{_os.curdir}/inihandler/lang"
+##vars.MSG = {}
+#vars.ERR = {}
+#vars.WARN = {}
+#_lang_dir = f"{_os.curdir}/inihandler/lang"
 #print(_lang_dir)
 
 class INIhandler:
-    def __init__(self, file_path: _StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str="", lang: str="english"):
+    def __init__(self, file_path: vars.StringOrDict="", bInstantSave: bool=True, bStrict: bool=True, bForcedCommentStyle: vars.NoneOrString=None, bVerbose: bool=False, sVerbosePrefix: str="", SEP: str="=", sEncoding: str="utf-8", sDefaultBackupConfig: str="", lang: str="english"):
         """
         Initialize the ini-handler, the one that preserves file comments on normal saves!
         
@@ -86,13 +79,14 @@ class INIhandler:
         self._isDict = False
 
         # Lets ini the language messages
-        self.lang_list()
-        self.lang_set(lang)
+        vars.lang_list()
+        #MSG, ERR, WARN = "", "", ""
+        vars.lang_set(lang)
 
         # Lets be lazy
-        self._print_verbose(_MSG["init"])
+        self._print_verbose(vars.MSG["init"])
         self._load_any()
-        self._print_verbose(_MSG["conf_read"])
+        self._print_verbose(vars.MSG["conf_read"])
 
         # Prepare things global?
         
@@ -151,70 +145,24 @@ class INIhandler:
 
     def __ResetConfig(self):
         """Restores the configuration file from the provided backup path."""
-        self._print_verbose(_WARN['backup_start'])
+        self._print_verbose(vars.WARN['backup_start'])
         if self.sDefaultBackupConfig and _os.path.exists(self.sDefaultBackupConfig):
             try:
                 # shutil.copy2 preserves metadata (like timestamps) 
                 # shutil.copy just copies the content.
                 _shutil.copy2(str(self.sDefaultBackupConfig), str(self.file_path))
-                self._print_verbose(f"{_WARN['backup_end']} -> {self.file_path}")
+                self._print_verbose(f"{vars.WARN['backup_end']} -> {self.file_path}")
                 return True
             except Exception as e:
                 # This is an error and thus most be forced
-                self._print_verbose(f"{_ERR['backup_fail']} -> {self.file_path}:\n{e}", bOverWriteErrorMessage=True)
+                self._print_verbose(f"{vars.ERR['backup_fail']} -> {self.file_path}:\n{e}", bOverWriteErrorMessage=True)
                 return False
         else:
             # This is an error and thus most be forced
-            self._print_verbose(f"{_ERR['backup_miss']} -> '{self.sDefaultBackupConfig}'.", bOverWriteErrorMessage=True)
+            self._print_verbose(f"{vars.ERR['backup_miss']} -> '{self.sDefaultBackupConfig}'.", bOverWriteErrorMessage=True)
             return False
 
-    def lang_set(self, language: str) -> bool:
-        """
-        WIP: Either init or change a supported language
-        
-        Expects either an exiting file in ./inihandler/lang or full path to file
-        """
-        global _MSG
-        global _ERR
-        global _WARN
-        global _lang_dir
-        newLang = f"{_lang_dir}\\{language}.py"
-        for L in newLang, language:
-            if _os.path.isfile(f):
-                if L == "english":
-                    self._print_verbose(f"{_MSG['lang_default']}: {L}")
-                    from .lang.english import _MSG, _ERR, _WARN
-                    return True
-                else:
-                    # Currently no other languages are supported
-                    # Using default language as fallback
-                    from .lang.english import _MSG, _ERR, _WARN
-                    
-                    # i cant import from a string reference to an absolute path.. right?
-                    #_sys.path.append(str(_lang_dir))
-                    #from .lang.language import _MSG, _ERR, _WARN
-
-                    # returning false to indicate the proper language is missing.
-                    return False
-        
-        # Provided string isnt an existing language file
-        # Lets load default language and return False
-        self._print_verbose(f"{_WARN['lang_miss']} -> {language}")
-        from .lang.english import _MSG, _ERR, _WARN
-        return False
     
-    def lang_list(self) -> list:
-        """List supported languages"""
-        global _MSG
-        global _ERR
-        global _WARN
-        global _lang_dir
-        result = []
-        
-        for entry in _os.listdir(_lang_dir):
-            if _os.path.isfile(entry):
-                result.append(entry[:2])
-        return list(result)
     
     ############################################################################
     #
@@ -225,7 +173,7 @@ class INIhandler:
     def _load_any(self):
         """Lazy 'bootstrap' loader, this simply redirects the class-wide provided **class.file_path** to its optimized **load_* after some basic verifications**"""
         # Import Messages
-        global _MSG, _ERR
+        #global vars.MSG, vars.ERR, vars.WARN
 
         #
         #   Prepare file handling
@@ -233,12 +181,12 @@ class INIhandler:
         #   We'll be using EITHER load_file (file) OR load_data (dict)
         #
         if isinstance(self.file_path, str):
-            self._print_verbose(f"{_MSG['conf_load']}: 'str' ({self.file_path}).")
+            self._print_verbose(f"{vars.MSG['conf_load']}: 'str' ({self.file_path}).")
             self.load_file()
             return True
         elif isinstance(self.file_path, dict):
             self._isDict = True
-            self._print_verbose(f"{_MSG['conf_load']} 'dict'.")
+            self._print_verbose(f"{vars.MSG['conf_load']} 'dict'.")
             # There is no instant save, if its dict/memory only!
             self.bInstantSave = False
             self.load_data()
@@ -248,7 +196,7 @@ class INIhandler:
             if not self.sDefaultBackupConfig == "":
                 return self.__ResetConfig()
             else:
-                self._print_verbose(f"Invalid : {self.file_path}\n{_ERR["value"]}", bOverWriteErrorMessage=True)
+                self._print_verbose(f"Invalid : {self.file_path}\n{vars.ERR["value"]}", bOverWriteErrorMessage=True)
                 return False
             
     def load_data(self, data_overwrite:dict = {}):
@@ -260,7 +208,7 @@ class INIhandler:
         :param file_overwrite: Only used when importing, if empty uses already saved **class.file_path**,
         """
         # Import Messages
-        global _MSG, _ERR
+        #global vars.MSG, vars.ERR
 
 
         this_data:dict = {}
@@ -269,7 +217,7 @@ class INIhandler:
                 this_data=dict(data_overwrite)
             else:
                 # valid dict, but empty
-                self._print_verbose(_ERR["value"], bOverWriteErrorMessage=True)
+                self._print_verbose(vars.ERR["value"], bOverWriteErrorMessage=True)
                 return False
         else:
             # It should already had been verified wether self.file_path is a dict or not... (from self._load_any())
@@ -279,7 +227,7 @@ class INIhandler:
                     this_data=self.file_path.copy()
                 else:
                     # valid dict, but empty
-                    self._print_verbose(_ERR['empty'], bOverWriteErrorMessage=True)
+                    self._print_verbose(vars.ERR['empty'], bOverWriteErrorMessage=True)
                     return False
             else:
                 # This would actualy be very bad
@@ -290,8 +238,8 @@ class INIhandler:
                     else:
                         return FileNotFoundError
                 else:
-                    self._print_verbose(_MSG["invalid_data"], bOverWriteErrorMessage=True)
-                    #self._print_verbose(f"Invalid : {self.file_path}\n{_ERR["value"]}", bOverWriteErrorMessage=True)
+                    self._print_verbose(vars.MSG["invalid_data"], bOverWriteErrorMessage=True)
+                    #self._print_verbose(f"Invalid : {self.file_path}\n{vars.ERR["value"]}", bOverWriteErrorMessage=True)
                     return False
 
         # Ok, basic sanity seems fine
@@ -301,13 +249,13 @@ class INIhandler:
         # Lets try to aactualy load the data
         try:
             self.__data.quick = this_data
-            self._print_verbose(f"{_MSG['conf_read']}")
+            self._print_verbose(f"{vars.MSG['conf_read']}")
             return True
         except ImportError: 
-            self._print_verbose(_ERR["import"], bOverWriteErrorMessage=True)
+            self._print_verbose(vars.ERR["import"], bOverWriteErrorMessage=True)
             raise UnboundLocalError(this_data)
         except Exception as e:
-            self._print_verbose(f"{_ERR['generic']}: {e}", bOverWriteErrorMessage=True)
+            self._print_verbose(f"{vars.ERR['generic']}: {e}", bOverWriteErrorMessage=True)
             raise Exception(this_data)
     
     def load_file(self, file_overwrite: str=""):
@@ -324,7 +272,7 @@ class INIhandler:
             this_file=str(self.file_path)
 
         # Import Messages
-        global _MSG, _ERR, _WARN
+        #global vars.MSG, vars.ERR, vars.WARN
         
         # Import variables
         bForcedCommentStyle = self.bForcedCommentStyle
@@ -336,7 +284,7 @@ class INIhandler:
 
         # Lets verify file exists, or at least a default config
         if not _os.path.exists(str(this_file)):
-            self._print_verbose(f"{_MSG["file_not_found"]}: {this_file}")
+            self._print_verbose(f"{vars.MSG["file_not_found"]}: {this_file}")
             if not self.sDefaultBackupConfig == "":
                 # Message is handled from "reset" internaly"
                 if not self.__ResetConfig():
@@ -349,251 +297,6 @@ class INIhandler:
         # Seems fine so far...
         # Lets prepare some little helper functions here to ease readability
         # Yes, most of this could be wrote directly in code, i still prefer this approach
-        def __hasQuotes(this_line:str) -> bool:
-            """Simply check wether quotes were found, and wether it has at least 2 - open & close - ones"""
-            global _quotes      # Import "global" list: [", ']
-            found = 0           # Counter for the loop
-            if not this_line:
-                # Line was empty
-                return False
-            
-            # Start parsing
-            for q in _quotes:
-                if this_line.count(q) == 2:
-                    # Its a valid count value
-                    return True
-
-            # if we reach here...
-            # Either only "single quotes" (like this stupid example: i'm fine) were used, or no quotes at all
-            return False
-        def __getValidQuoteChar(this_line:str) -> str:
-            """
-            Expects a line that DOES contain quotes
-            
-            Returns indicator char for valid quotes
-            """
-            global _quotes
-            # Yes this is slightly similar to __hasQuotes(), 
-            # but we return something different
-            for q in _quotes:
-                if 2 == this_line.count(q):
-                    # seems valid
-                    return q
-            # while it should not reach here
-            # lets return an empty string
-            return ""
-
-        def __getPostValueComment(this_line:str):
-            """Returns everything AFTER value, aka cut before comment indicator"""
-            global _comments
-            if __hasQuotes(this_line):
-                # Need to get position of closing quote
-                # then "split/cut there"
-                quote = __getValidQuoteChar(this_line)
-                # Expecting to split at each occourence of a quote
-                posQ = this_line.find(quote, 3) #split(quote)[2]
-                tmp = this_line[posQ + 1]
-                work_line = tmp.strip
-            else:
-                # No (valid-) quotes found, just split at found _comments[]
-                work_line = this_line.strip
-
-            # Now we need to split at FIRST comment indicator
-            posC = len(work_line)
-            posC_new = 0
-            for com in _comments:
-                # Lets ensure we only get the pos from the earliest find within the string
-                posC_new = work_line.find(com)
-
-                if posC_new != -1 and posC_new < posC:
-                    posC = posC_new
-
-            if posC == len(work_line):
-                return ""
-            else:
-                return work_line[posC + 1].strip()
-
-
-        def _isComment(this_line: str, bForcedCommentStyle=bForcedCommentStyle) -> bool:
-            """Is a comment?"""
-            global _comments
-            global _WARN
-            ret = False
-            # First, lets check for forced comment
-            if bForcedCommentStyle:
-                # Its not None
-                if this_line.startswith(bForcedCommentStyle):
-                    # Yes, it does start with a forced comment style
-                    ret = True
-
-            for com in _comments:
-                if str(this_line).startswith(com):
-                    # Lets double check if it was a forced one,
-                    # and/or act with the the current found one differs from the forced one
-                    if bForcedCommentStyle and com != bForcedCommentStyle:
-                        # We have a forced comment style, but the used/found comment indicator differs
-                        print(f"{_WARN["bForcedCommentStyle_differs"]}: '{com}' != bForcedCommentStyle='{bForcedCommentStyle}'", file=_sys.stderr)
-                    ret = True
-                    break
-            # No valid comment was found    
-            return ret
-
-        def _hasOnLineComment(this_line: str, bForcedCommentStyle=bForcedCommentStyle, SEP=SEP) -> bool:
-            """
-            Checks whether the line has a comment after the value, that is NOT inside quotes.
-
-            This may only be checked AFTER _isComment(line).
-
-            This function should only return True/False quickly
-            """
-            # Reminder: Establish a priority list
-            # 1. if no entries of _comments[] was found -> False
-            # 2. if any quotes were found, only check past the closing quote
-
-            global _comments
-            #global bForcedCommentStyle  # this will be assigned to "sep" (lower case) -> comment indicator
-            #global SEP                  # this is the var = val indicator, SEP (capital letter)
-
-            # Expect an comment separator
-            sep = None
-            if not bForcedCommentStyle:
-                for com in _comments: 
-                    if com in this_line:
-                        # TODO possible issue -> stupid example:  'var=val // we have #3 problems with this value ; maybe more'
-                        sep = com
-                        # The above said, doesnt really matter wether we "overwrite" sep, or break on first find...
-                        break
-            else:
-                # Only 1 "style" of comments is allowed
-                if bForcedCommentStyle in this_line:
-                    sep = bForcedCommentStyle
-
-            if not sep:
-                # No valid comment indicator found
-                return False
-                #sep = _comments[0]  # default to '#'
-
-            if __hasQuotes(this_line):
-                if not __getPostValueComment(this_line) == "":
-                    # Its not empty, so we have a comment there
-                    # Now writing this... this seems like a "double check"
-                    # at least we'll be calling the __getPostValueComment twice.. 
-                    #here for the check, and then afterwards for the actual use...
-                    return True
-
-
-            if not SEP in this_line:
-                return False
-            
-            # Find the separator
-            sep_idx = this_line.find(sep)
-            if sep_idx == -1:
-                # Basicly: its at the start
-                return False
-            
-            # Extract the part after the separator
-            comment_part = this_line[sep_idx + 1:].strip()
-            
-            # If the part after separator is only whitespace, it's not a comment
-            if not comment_part:
-                return False
-            
-            # Check if the comment character appears inside double or single quotes
-            # Find the first closing quote for the opening quote
-            _quotes = ["'", '"'] # Easier for parsing
-            quote = None
-            found = 0           # Counter for the loop
-            hasQuotes = None
-            for q in _quotes:
-                if q in this_line:
-                    found += 1
-                    hasQuotes = True
-                    quote = q
-            if found >= 2:
-                # Both quote types were found... how to handle?
-                hasQuotes = True
-            elif not quote:
-                # No quotes found, simple handling
-                hasQuotes = False
-
-            #
-            #   Lets handle accordingly
-            #
-            if hasQuotes:
-                # TODO
-                pass
-            else:
-                # No quotes were found
-                # Comment indicator WAS found (or we would have aported several lines above)
-                # So, since comment indicator found, but line has no quotes -> True
-                return True
-
-            quote_start = this_line.find("'", sep_idx)
-            quote_end = this_line.find("'", quote_start + 1) if quote_start != -1 else -1
-            if 0 < sep_idx < quote_start < quote_end and quote_end < len(this_line):
-                # Comment is inside quotes, skip it
-                pass
-            else:
-                # Find double quotes
-                if quote_start == -1:
-                    quote_start = this_line.find('"', sep_idx)
-                    quote_end = this_line.find('"', quote_start + 1) if quote_start != -1 else -1
-                
-                if 0 < sep_idx < quote_start < quote_end and quote_end < len(this_line):
-                    # Comment is inside quotes, skip it
-                    pass
-                else:
-                    # Check if the comment character appears after the value
-                    for com in _comments:
-                        if sep in this_line[sep_idx + 1:].strip():
-                            return True
-            
-            return False
-
-        def _SplitCommentAfterValue(this_line: str) -> _StringAndString:
-            """"
-            If 'this_line' has a comment after value, it returns: value, comment
-
-            :param this_line: Pass string to function
-            :param _StringAndString: Retrieve as: "line, comment = _SplitCommentAfterValue(line_current)"
-            """
-            parts = this_line.split("#", 1)
-            return parts[0].strip(), parts[1].strip()
-        
-        def _isSection(this_line: str) -> bool:
-            """Returns True if 'this_line' is a section: '[something]'"""
-            if this_line.startswith('[') and this_line.endswith(']'):
-                return True
-            else:
-                return False
-
-        def _getSection(this_line: str) -> str:
-            """Returns only 'section' name"""
-            return this_line[1:-1].strip()
-
-        def _isValue(this_line: str) -> bool:
-            """This checks wether its a variable = value , while NOT being within a comment.
-            
-            Allthough a comment should not get passed here, we just want to ensure it.
-            """
-            global _comments
-            for com in _comments:
-                if this_line.startswith(com):
-                    # Line started with a comment, lets abort
-                    return False
-            if self._sep in this_line:
-                # Seperator found
-                return True
-            return False
-
-        def _SplitVarValue(this_line: str) -> _StringAndString:
-            """
-            This expects 'this_line' to be already 'cleaned' from any possible 'on line comments'.
-            
-            Returns: Variable/Key, Value
-            """
-            parts = this_line.split(self._sep, 1)
-            return parts[0].strip(), parts[1].strip()
 
 
         # Lets flush any old data (in case of import) and try to read the file
@@ -618,15 +321,16 @@ class INIhandler:
                     self.__data.lines.append(clean_line)
 
                     # Lets prepare comment buffer
-                    if _isComment(clean_line, bForcedCommentStyle=bForcedCommentStyle) or clean_line == "":
+                    var, val = "", ""
+                    if LoadFile._isComment(clean_line, bForcedCommentStyle=bForcedCommentStyle) or clean_line == "":
                         tmp_list.append(clean_line)
                         continue
                     
                     # This could be enough, but since we're parsing anyway line by line..
                     # Lets assign any found data to self.__data.quick as well
-                    elif _isSection(clean_line):
+                    elif LoadFile._isSection(clean_line):
                         last_section = current_section
-                        current_section = _getSection(clean_line)
+                        current_section = LoadFile._getSection(clean_line)
                         if not tmp_list == []:
                             # Has comments
                             if not current_section in self.__data.comment_before:
@@ -639,18 +343,17 @@ class INIhandler:
                         continue
 
                     # Hope for values...
-                    elif _isValue(clean_line):
-                        var, val = "", ""
+                    elif LoadFile._isValue(clean_line, self._sep):
                         # Lets make sure, we're only getting the data
-                        if _hasOnLineComment(clean_line, bForcedCommentStyle=bForcedCommentStyle, SEP=SEP):
+                        if LoadFile._hasOnLineComment(clean_line, bForcedCommentStyle=bForcedCommentStyle, SEP=SEP):
                             tmp, com = "", ""
-                            tmp, com = _SplitCommentAfterValue(clean_line)
-                            var, val = _SplitVarValue(tmp)
+                            tmp, com = LoadFile._SplitCommentAfterValue(clean_line)
+                            var, val = LoadFile._SplitVarValue(tmp, SEP=self._sep)
 
                             # Since we're at it, lets also save the "on line comment"
                             self.__data.comment_on_line[f"{current_section}.{var}"] = [com]
                         else:
-                            var, val = _SplitVarValue(clean_line)
+                            var, val = LoadFile._SplitVarValue(clean_line, SEP=self._sep)
 
                         # Save data
                         if self.bStrict or current_section == "":
@@ -691,20 +394,20 @@ class INIhandler:
                                 self.__data.comment_before[f"{current_section}.{var}"] = line
                             
                             # Lets check wether we can close/end the multi line comment or not
-                            if _comments_multi_end[isMultiLine] in clean_line:
+                            if vars.comments_multi_end[isMultiLine] in clean_line:
                                 # We have found the closing tag
                                 isMultiLine = None
                         else:
                             # At this point, it must be either an opening for a multi line, 
                             # or somethign different entirely...
                             i = 0
-                            for mli in _comments_multi_start:
+                            for mli in vars.comments_multi_start:
                                 if clean_line.startswith(mli) or mli in clean_line:
                                     # It is the start of a multi line comment
                                     # so lets get the index
-                                    while i < len(_comments_multi_start):
-                                        if mli != _comments_multi_start[i]:
-                                            print(f"DEBUG:: {i} is small than {len(_comments_multi_start)}")
+                                    while i < len(vars.comments_multi_start):
+                                        if mli != vars.comments_multi_start[i]:
+                                            print(f"DEBUG:: {i} is small than {len(vars.comments_multi_start)}")
                                             i += 1
                                         else:
                                             # its the right one
@@ -750,7 +453,7 @@ class INIhandler:
         elif file_path != "":
             # Double check if something was passed
             # Will be handled as path/file
-            self.save(export=file_path)
+            self.save(file_export=file_path)
         else:
             # bDict is still False and nothing was passed as file_path
             raise FileNotFoundError()
@@ -914,7 +617,7 @@ class INIhandler:
     def _get_quick(self):
         return self.__data.quick
 
-    def list_sections(self, bString=False) -> _ListOrString:
+    def list_sections(self, bString=False) -> vars.ListOrString:
         """
         Returns a list of available sections.
         
@@ -926,7 +629,7 @@ class INIhandler:
         else:
             return sections
 
-    def list_variables(self, section: str, bString=False) -> _ListOrString:
+    def list_variables(self, section: str, bString=False) -> vars.ListOrString:
         """Returns a list of variables """
         vars = list(self.__data.quick[section].keys())
         if bString:
@@ -934,7 +637,7 @@ class INIhandler:
         else:
             return vars
 
-    def list_variables_simple(self, bString=False) -> _ListOrString:
+    def list_variables_simple(self, bString=False) -> vars.ListOrString:
         """Returns a list of variables for a config without [Sections]"""
         vars = list(self.__data.quick.keys())
         if bString:

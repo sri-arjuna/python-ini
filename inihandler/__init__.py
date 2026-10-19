@@ -1,7 +1,20 @@
 from .ini import INIhandler as _INIhandler
-from typing import Union as _Union
 
-def handler(file_path="", bInstantSave=True, bStrict=True, bForcedCommentStyle: _Union[None, str]=None, bVerbose=False, sVerbosePrefix="", SEP="=", sEncoding="utf-8", sDefaultBackupConfig="", lang: str="english"):
+#
+#   Imports - Official
+#
+import os as _os
+import sys as _sys
+import shutil as _shutil
+
+#
+#   Imports - Internals
+#
+from .tools import vars
+from .tools import LoadFile
+
+
+def handler(file_path="", bInstantSave=True, bStrict=True, bForcedCommentStyle: vars.NoneOrString=None, bVerbose=False, sVerbosePrefix="", SEP="=", sEncoding="utf-8", sDefaultBackupConfig="", lang: str="english"):
     """
     Initialize the ini-handler, the one that preserves file comments on normal saves!
 
